@@ -10,18 +10,18 @@ library(foreach)
 
 
 getwd()
-p<-"C:/Users/Swapna/Documents/R files test/Dataset"
+p<-"C:/Users/gopi/Documents/R files test/Dataset"
 setwd(p)
-train1<-fread("C:/Users/Swapna/Documents/R files test/Dataset/Training/Features_Variant_1.csv")
-train2<-fread("C:/Users/Swapna/Documents/R files test/Dataset/Training/Features_Variant_2.csv")
-train3<-fread("C:/Users/Swapna/Documents/R files test/Dataset/Training/Features_Variant_3.csv")
-train4<-fread("C:/Users/Swapna/Documents/R files test/Dataset/Training/Features_Variant_4.csv")
-train5<-fread("C:/Users/Swapna/Documents/R files test/Dataset/Training/Features_Variant_5.csv")
+train1<-fread("C:/Users/gopi/Documents/R files test/Dataset/Training/Features_Variant_1.csv")
+train2<-fread("C:/Users/gopi/Documents/R files test/Dataset/Training/Features_Variant_2.csv")
+train3<-fread("C:/Users/gopi/Documents/R files test/Dataset/Training/Features_Variant_3.csv")
+train4<-fread("C:/Users/gopi/Documents/R files test/Dataset/Training/Features_Variant_4.csv")
+train5<-fread("C:/Users/gopi/Documents/R files test/Dataset/Training/Features_Variant_5.csv")
 train<-rbind(train1,train2,train3,train4,train5)
 train
 View(train)
 
-test<-fread("C:/Users/Swapna/Documents/R files test/Dataset/Testing/Features_TestSet.csv")
+test<-fread("C:/Users/gopi/Documents/R files test/Dataset/Testing/Features_TestSet.csv")
 View(test)
 
 # log-transform    
@@ -34,45 +34,52 @@ train<-sapply(training, class)
 library(tree)
 library(C50)
 
-model1<-lm(train$V54~., data = train)
+model1<-lm(train$V54~. , data = train)
 mean(model1$residuals)
 round(mean(model1$residuals),1)
+plot(model1)
+
 acf(model1$residuals)
 coefficients(model1)
 confint(model1,level = 0.95)
 anova(model1)
 
+library(car)
+vif(model1) #to check multicolinearity between IVs
+
 library(MASS)
 fit<-lm(train$V54~.,data = train)
 step<-stepAIC(fit, direction = "both")
+
 library(lmtest)
 dwtest(model1)
 cor.test(train$V5,model1$residuals)
-ana<-tree(train$V54, data=train)
-predi<-predict(ana, churnTest[,-1], type="class")
-library(caret)
-library(rpart)
-
-train_control<-trainControl(method = "cv", number = 3)
-model<-train(train$V54~., data=train, trcontrol=train_control, method="glm")
+ana<-tree(train$V54~., data=train)
+summary(ana)
 
 
-
-confusionMatrix(predi, churnTest$churn)
-library(rpart)
-lys<-rpart(churn~.,data =churnTrain[,-1])
-plot(lys)
-text(lys)
-pred<-predict(lys,churnTest[,-1], typle="class")
-confusionMatrix(pred,churnTest$churn)
-rpart.plot::rpart.plot(lys)
 
 #b. Use regression technique
-
+library(rpart)
+lys<-rpart(train$V54~.,data =train)
+plot(lys)
+text(lys)
+pred<-predict(lys,test)
+rpart.plot::rpart.plot(lys)
+confusionMatrix(pred,test[,-V54])
 
 
 
 #c. Report the training accuracy and test accuracy 
+library(caret)
+train_control<-trai
+nControl(method = "cv", number = 3)
+tune_grid<-expand.grid(interaction.depth = 2,n.trees = 500, shrinkage = 0.1,n.minobsinnode = 10)
+
+
+set.seed(123)
+model<-train(train$V54~., data=train,tuneGrid=gbmGrid, trcontrol=train_control, method="gbm", verbose=FALSE)
+predicted<-predict(model,test[,-V54], type="link")
 
 
 
